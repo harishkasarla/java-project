@@ -21,3 +21,10 @@ jobs:
 
     - name: Build Maven package
       run: mvn clean package -DskipTests
+  
+  Artifacts:
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: maven-package
+        path: target/*.jar
