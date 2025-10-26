@@ -36,8 +36,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        FULL_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${COMMIT_HASH}"
-        docker build -t $FULL_IMAGE -f Dockerfile .
+        docker build -t test -f Dockerfile .
 
     # - name: Authenticate to Google Cloud
     #   uses: google-github-actions/auth@v1
