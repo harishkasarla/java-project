@@ -1,4 +1,4 @@
-name: Build Package
+name: Maven Package Build
 
 on:
   push:
@@ -13,17 +13,11 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-    - name: Extract short commit hash
-      id: vars
-      run: echo "COMMIT_HASH=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
-
-    - name: Build Docker image
-      run: |
-        IMAGE_NAME=spring-boot-app
-        COMMIT_HASH=${{ env.COMMIT_HASH }}
-        FULL_IMAGE="${IMAGE_NAME}:${COMMIT_HASH}"
-        echo "Building Docker image $FULL_IMAGE"
-        docker build -t $FULL_IMAGE -f Dockerfile .
+    - name: Build Maven package
+      run: mvn clean package
