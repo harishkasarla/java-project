@@ -7,10 +7,12 @@ on:
 
 defaults:
   run:
+    # Optional: default runner for steps (not jobs)
     runs-on: [self-hosted, macos]
 
 jobs:
   build:
+    runs-on: [self-hosted, macos]  # mandatory for each job
     outputs:
       artifact-path: ${{ steps.set-path.outputs.artifact_path }}
 
@@ -34,6 +36,7 @@ jobs:
 
   archive-artifacts:
     needs: build
+    runs-on: [self-hosted, macos]  # mandatory here too
 
     steps:
       - name: Checkout source (required in separate job)
