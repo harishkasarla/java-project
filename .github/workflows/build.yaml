@@ -1,0 +1,29 @@
+name: Build Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: [self-hosted, macos]
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Extract short commit hash
+      id: vars
+      run: echo "COMMIT_HASH=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
+
+    - name: Build Docker image
+      run: |
+        IMAGE_NAME=spring-boot-app
+        COMMIT_HASH=${{ env.COMMIT_HASH }}
+        FULL_IMAGE="${IMAGE_NAME}:${COMMIT_HASH}"
+        echo "Building Docker image $FULL_IMAGE"
+        docker build -t $FULL_IMAGE -f Dockerfile .
