@@ -5,9 +5,12 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    runs-on: [self-hosted, macos]
+
 jobs:
   build:
-    runs-on: [self-hosted, macos]
     outputs:
       artifact-path: ${{ steps.set-path.outputs.artifact_path }}
 
@@ -27,18 +30,18 @@ jobs:
 
     - name: Set artifact path output
       id: set-path
-      run: echo "::set-output name=artifact_path::target/*.jar"
+      run: echo "artifact_path=target/*.jar" >> $GITHUB_OUTPUT
 
   archive-artifacts:
     needs: build
     runs-on: [self-hosted, macos]
 
     steps:
-    - name: Download source (required in separate job)
+    - name: Checkout source (required in separate job)
       uses: actions/checkout@v3
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: maven-package
         path: target/*.jar
