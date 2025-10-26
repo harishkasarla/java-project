@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: [self-hosted, macos]
+    outputs:
+      artifact-path: ${{ steps.set-path.outputs.artifact_path }}
 
     steps:
     - name: Checkout source
@@ -20,9 +22,21 @@ jobs:
         java-version: '17'
 
     - name: Build Maven package
+      id: build
       run: mvn clean package -DskipTests
-  
-  Artifacts:
+
+    - name: Set artifact path output
+      id: set-path
+      run: echo "::set-output name=artifact_path::target/*.jar"
+
+  archive-artifacts:
+    needs: build
+    runs-on: [self-hosted, macos]
+
+    steps:
+    - name: Download source (required in separate job)
+      uses: actions/checkout@v3
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
