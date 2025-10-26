@@ -1,4 +1,4 @@
-name: Maven Package Build
+name: Build and Deploy to GKE
 
 on:
   push:
@@ -6,8 +6,16 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: [self-hosted, macos]
+
+    # env:
+    #   PROJECT_ID: your-gcp-project-id
+    #   REGION: asia-south1
+    #   REPO_NAME: jenkins-images
+    #   IMAGE_NAME: spring-boot-app
+    #   CLUSTER_NAME: your-gke-cluster
+    #   DEPLOY_NAMESPACE: default
 
     steps:
     - name: Checkout source
@@ -19,25 +27,40 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Build Maven package
-      run: mvn clean package -DskipTests
+    # - name: Set up Docker Buildx
+    #   uses: docker/setup-buildx-action@v2
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: maven-package
-        path: target/*.jar
+    - name: Extract short commit hash
+      id: vars
+      run: echo "COMMIT_HASH=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
 
-  archive-artifacts:
-    needs: build
-    runs-on: [self-hosted, macos]
+    - name: Build Docker image
+      run: |
+        FULL_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${COMMIT_HASH}"
+        docker build -t $FULL_IMAGE -f Dockerfile .
 
-    steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: maven-package
-        path: ./target
+    # - name: Authenticate to Google Cloud
+    #   uses: google-github-actions/auth@v1
+    #   with:
+    #     credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-    - name: List downloaded artifacts
-      run: ls -l target/
+    # - name: Configure Docker for Google Artifact Registry
+    #   run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+    # - name: Push Docker image to GAR
+    #   run: |
+    #     FULL_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${COMMIT_HASH}"
+    #     docker push $FULL_IMAGE
+
+    # - name: Set up kubectl
+    #   uses: google-github-actions/get-gke-credentials@v1
+    #   with:
+    #     cluster_name: ${{ env.CLUSTER_NAME }}
+    #     location: ${{ env.REGION }}
+    #     credentials: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    # - name: Deploy to GKE
+    #   run: |
+    #     FULL_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${COMMIT_HASH}"
+    #     kubectl set image deployment/${IMAGE_NAME} ${IMAGE_NAME}=$FULL_IMAGE -n ${DEPLOY_NAMESPACE}
+    #     kubectl rollout status deployment/${IMAGE_NAME} -n ${DEPLOY_NAMESPACE}
